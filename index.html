@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WanderWise &mdash; AI Trip Planning Expert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --primary-gradient: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+      --bg-main: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-chat: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --border-color: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --user-bubble: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      --assistant-bubble: #ffffff;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 1050px;
+      width: 100%;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+    }
+
+    .brand-info h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .brand-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #059669;
+      background: #ecfdf5;
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid #d1fae5;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-clear:hover {
+      background: #f8fafc;
+      color: var(--text-main);
+      border-color: #cbd5e1;
+    }
+
+    /* Chat Area */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: var(--bg-chat);
+      scroll-behavior: smooth;
+    }
+
+    .welcome-screen {
+      margin: auto 0;
+      text-align: center;
+      padding: 20px 10px;
+      max-width: 600px;
+      align-self: center;
+    }
+
+    .welcome-screen .hero-icon {
+      font-size: 44px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .welcome-screen h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .welcome-screen p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .chip {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 9px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chip:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    /* Message Item */
+    .message-row {
+      display: flex;
+      gap: 12px;
+      max-width: 82%;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-row.assistant {
+      align-self: flex-start;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .user .avatar {
+      background: #0284c7;
+      color: white;
+    }
+
+    .assistant .avatar {
+      background: #0d9488;
+      color: white;
+    }
+
+    .bubble {
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      line-height: 1.6;
+      font-size: 14.5px;
+      position: relative;
+      word-break: break-word;
+    }
+
+    .user .bubble {
+      background: var(--user-bubble);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .assistant .bubble {
+      background: var(--assistant-bubble);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Markdown styling inside bubble */
+    .bubble p {
+      margin-bottom: 10px;
+    }
+    .bubble p:last-child {
+      margin-bottom: 0;
+    }
+    .bubble ul, .bubble ol {
+      margin: 8px 0 10px 22px;
+    }
+    .bubble li {
+      margin-bottom: 5px;
+    }
+    .bubble strong {
+      font-weight: 700;
+      color: inherit;
+    }
+    .bubble h2, .bubble h3, .bubble h4 {
+      margin: 14px 0 6px 0;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .user .bubble h2, .user .bubble h3, .user .bubble h4 {
+      color: #ffffff;
+    }
+    .bubble code {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    /* Thinking / Typing State */
+    .thinking-row {
+      display: flex;
+      gap: 12px;
+      align-self: flex-start;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    .thinking-bubble {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      border-bottom-left-radius: 4px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .thinking-dots {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .thinking-dots span {
+      width: 7px;
+      height: 7px;
+      background-color: var(--primary);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.4s infinite ease-in-out both;
+    }
+
+    .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+    .thinking-dots span:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1.1); opacity: 1; }
+    }
+
+    .thinking-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Input Footer */
+    .chat-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      padding: 16px 24px 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .input-box-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 6px 10px 6px 14px;
+      transition: all 0.2s ease;
+    }
+
+    .input-box-wrapper:focus-within {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    textarea#user-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 14.5px;
+      line-height: 1.4;
+      max-height: 140px;
+      min-height: 26px;
+      padding: 6px 0;
+      color: var(--text-main);
+    }
+
+    textarea#user-input::placeholder {
+      color: var(--text-light);
+    }
+
+    .btn-send {
+      background: var(--primary-gradient);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+    }
+
+    .btn-send:hover:not(:disabled) {
+      transform: scale(1.04);
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4);
+    }
+
+    .btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-send svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .disclaimer-bar {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .disclaimer-bar span {
+      font-weight: 600;
+      color: #b45309;
+    }
+
+    /* Error Notification */
+    .error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .app-container {
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      header {
+        padding: 12px 16px;
+      }
+      .chat-messages {
+        padding: 16px;
+      }
+      .message-row {
+        max-width: 90%;
+      }
+      .chat-footer {
+        padding: 12px 16px 8px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">✈️</div>
+        <div class="brand-info">
+          <h1>WanderWise AI</h1>
+          <p>Trip Planning Expert & Travel Companion</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>Online</span>
+        </div>
+        <button class="btn-clear" id="btn-clear" title="Start a new chat session">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          New Trip
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Messages Stream -->
+    <main class="chat-messages" id="chat-messages">
+      <div class="welcome-screen" id="welcome-screen">
+        <div class="hero-icon">🌍</div>
+        <h2>Where is your next adventure?</h2>
+        <p>I can help build custom day-by-day itineraries, estimate travel budgets, suggest hidden gems, packing checklists, and local cultural etiquette.</p>
+        
+        <div class="quick-chips">
+          <button class="chip" data-prompt="Plan a 5-day romantic and cultural itinerary in Kyoto and Tokyo, Japan.">🇯🇵 5-Day Japan Explorer</button>
+          <button class="chip" data-prompt="Create a budget backpacking guide for 2 weeks across Southern Italy & Amalfi Coast.">🇮🇹 Southern Italy on a Budget</button>
+          <button class="chip" data-prompt="Give me a 3-day family-friendly itinerary in London with kids under 10.">🇬🇧 3 Days in London (Family)</button>
+          <button class="chip" data-prompt="Suggest a packing list and local travel etiquette tips for traveling to Iceland in winter.">🇮🇸 Iceland Winter Packing & Tips</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-banner" style="margin: 0 24px;">
+      <span id="error-text">An error occurred.</span>
+      <button onclick="hideError()" style="background:none;border:none;cursor:pointer;color:#991b1b;font-size:16px;">&times;</button>
+    </div>
+
+    <!-- Input Footer -->
+    <footer class="chat-footer">
+      <form id="chat-form" onsubmit="handleSendMessage(event)">
+        <div class="input-box-wrapper">
+          <textarea 
+            id="user-input" 
+            placeholder="Ask anything about your destination, itinerary, budget, or packing tips..." 
+            rows="1"
+            autocomplete="off"
+          ></textarea>
+          <button type="submit" class="btn-send" id="btn-send" title="Send message">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </form>
+      <div class="disclaimer-bar">
+        <span>Disclaimer:</span> AI recommendations are for planning guidance only. Always verify travel details, visa requirements, operating hours, and local health & safety regulations before booking.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // State management
+    const messageHistory = [];
+    let isGenerating = false;
+
+    const chatContainer = document.getElementById('chat-messages');
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const userInput = document.getElementById('user-input');
+    const btnSend = document.getElementById('btn-send');
+    const btnClear = document.getElementById('btn-clear');
+    const errorBanner = document.getElementById('error-banner');
+    const errorText = document.getElementById('error-text');
+
+    // Auto-expand textarea
+    userInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+    });
+
+    // Enter to submit, Shift+Enter for newline
+    userInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+      }
+    });
+
+    // Quick chip buttons
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        const prompt = this.getAttribute('data-prompt');
+        if (prompt && !isGenerating) {
+          userInput.value = prompt;
+          document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+        }
+      });
+    });
+
+    // Clear chat
+    btnClear.addEventListener('click', function() {
+      if (confirm('Start a fresh travel planning session?')) {
+        messageHistory.length = 0;
+        chatContainer.innerHTML = '';
+        chatContainer.appendChild(welcomeScreen);
+        welcomeScreen.style.display = 'block';
+        hideError();
+        userInput.value = '';
+        userInput.style.height = 'auto';
+      }
+    });
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorBanner.style.display = 'flex';
+    }
+
+    function hideError() {
+      errorBanner.style.display = 'none';
+    }
+
+    // Basic markdown-like formatter for bullet points, bold, headings
+    function formatMessageText(text) {
+      if (!text) return '';
+      let safe = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      // Headings
+      safe = safe.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+      safe = safe.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+      safe = safe.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+
+      // Bold & Italic
+      safe = safe.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+      safe = safe.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+
+      // Code blocks
+      safe = safe.replace(/`([^`]+)`/gim, '<code>$1</code>');
+
+      // Unordered lists
+      const lines = safe.split('\n');
+      let inList = false;
+      let formatted = [];
+
+      for (let line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+          if (!inList) {
+            formatted.push('<ul>');
+            inList = true;
+          }
+          formatted.push('<li>' + trimmed.substring(2) + '</li>');
+        } else if (/^\d+\.\s/.test(trimmed)) {
+          if (!inList) {
+            formatted.push('<ol>');
+            inList = true;
+          }
+          formatted.push('<li>' + trimmed.replace(/^\d+\.\s/, '') + '</li>');
+        } else {
+          if (inList) {
+            formatted.push('</ul>');
+            inList = false;
+          }
+          if (trimmed.length > 0) {
+            if (!trimmed.startsWith('<h') && !trimmed.startsWith('</')) {
+              formatted.push('<p>' + trimmed + '</p>');
+            } else {
+              formatted.push(trimmed);
+            }
+          }
+        }
+      }
+      if (inList) formatted.push('</ul>');
+
+      return formatted.join('');
+    }
+
+    function appendMessage(role, content) {
+      if (welcomeScreen.parentNode === chatContainer) {
+        welcomeScreen.style.display = 'none';
+      }
+
+      const row = document.createElement('div');
+      row.className = `message-row ${role}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = role === 'user' ? '👤' : '🧭';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = formatMessageText(content);
+
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      chatContainer.appendChild(row);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function showThinkingIndicator() {
+      const thinkingRow = document.createElement('div');
+      thinkingRow.className = 'thinking-row';
+      thinkingRow.id = 'thinking-indicator';
+
+      thinkingRow.innerHTML = `
+        <div class="avatar assistant">🧭</div>
+        <div class="thinking-bubble">
+          <div class="thinking-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <span class="thinking-text">Crafting your itinerary...</span>
+        </div>
+      `;
+
+      chatContainer.appendChild(thinkingRow);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function removeThinkingIndicator() {
+      const indicator = document.getElementById('thinking-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    async function handleSendMessage(event) {
+      event.preventDefault();
+      const text = userInput.value.trim();
+      if (!text || isGenerating) return;
+
+      hideError();
+      isGenerating = true;
+      btnSend.disabled = true;
+
+      // Add user message to UI & history
+      appendMessage('user', text);
+      messageHistory.push({ role: 'user', content: text });
+
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      showThinkingIndicator();
+
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: messageHistory })
+        });
+
+        const data = await response.json();
+        removeThinkingIndicator();
+
+        if (!response.ok) {
+          const errMsg = data.detail || data.error || 'Failed to get response from server';
+          showError(errMsg);
+          appendMessage('assistant', `⚠️ *Unable to generate response:* ${errMsg}`);
+        } else if (data.reply) {
+          appendMessage('assistant', data.reply);
+          messageHistory.push({ role: 'assistant', content: data.reply });
+        } else {
+          showError('Unexpected response format from backend.');
+        }
+      } catch (err) {
+        removeThinkingIndicator();
+        console.error('Error:', err);
+        showError('Network error connecting to the trip planning backend.');
+        appendMessage('assistant', '⚠️ *Connection error:* Could not connect to the backend server.');
+      } finally {
+        isGenerating = false;
+        btnSend.disabled = false;
+        userInput.focus();
+      }
+    }
+  </script>
+</body>
+</html>
