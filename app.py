@@ -114,12 +114,17 @@ async def health_check():
     """Basic health check endpoint."""
     endpoint_set = bool(os.getenv("AZURE_ENDPOINT"))
     key_set = bool(os.getenv("AZURE_API_KEY"))
-    deployment_set = bool(os.getenv("AZURE_DEPLOYMENT"))
+    deployment_val = (
+        os.getenv("AZURE_DEPLOYMENT")
+        or os.getenv("AZURE_DEPLOYMENT_NAME")
+        or os.getenv("ZURE_DEPLOYMENT_NAME")
+        or "gpt-5-mini"
+    ).strip()
     
     return {
         "status": "ok",
-        "environment_configured": endpoint_set and key_set and deployment_set,
-        "deployment": os.getenv("AZURE_DEPLOYMENT", "gpt-5-mini")
+        "environment_configured": endpoint_set and key_set and bool(deployment_val),
+        "deployment": deployment_val
     }
 
 
@@ -134,7 +139,12 @@ async def chat_endpoint(request: ChatRequest):
     """
     endpoint = os.getenv("AZURE_ENDPOINT", "").strip()
     api_key = os.getenv("AZURE_API_KEY", "").strip()
-    deployment = os.getenv("AZURE_DEPLOYMENT", "gpt-5-mini").strip()
+    deployment = (
+        os.getenv("AZURE_DEPLOYMENT")
+        or os.getenv("AZURE_DEPLOYMENT_NAME")
+        or os.getenv("ZURE_DEPLOYMENT_NAME")
+        or "gpt-5-mini"
+    ).strip()
 
     # Validate required credentials
     missing = []

@@ -751,11 +751,21 @@
       showThinkingIndicator();
 
       try {
-        const response = await fetch('/chat', {
+        let endpoint = '/chat';
+        let response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: messageHistory })
         });
+
+        // Fallback for Netlify if direct rewrite isn't active yet
+        if (response.status === 404) {
+          response = await fetch('/.netlify/functions/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: messageHistory })
+          });
+        }
 
         const data = await response.json();
         removeThinkingIndicator();
