@@ -111,7 +111,7 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         messages: messages,
-        max_completion_tokens: 2048,
+        max_completion_tokens: 16000,
       }),
     });
 
@@ -130,7 +130,21 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+    const choice = data.choices && data.choices[0];
+    const reply = (choice && choice.message && choice.message.content) || "";
+
+    if (!reply && choice && choice.finish_reason === "length") {
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          reply: "⚠️ The response required deep reasoning and reached the token limit. Please try asking a more specific question or breaking down your itinerary request!",
+        }),
+      };
+    }
 
     return {
       statusCode: 200,
@@ -138,7 +152,7 @@ exports.handler = async function(event, context) {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({ reply: reply }),
+      body: JSON.stringify({ reply: reply || "I couldn't generate a response for this prompt. Please try rephrasing your trip details." }),
     };
   } catch (err) {
     const sanitized = sanitizeError(err.message, apiKey);

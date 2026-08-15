@@ -183,14 +183,20 @@ async def chat_endpoint(request: ChatRequest):
         client = get_openai_client()
         logger.info(f"Dispatching chat completion to deployment: '{deployment}' with {len(formatted_messages)} messages")
 
-        # Use max_completion_tokens for broad compatibility with newer models like gpt-5-mini
+        # Use generous max_completion_tokens for reasoning models (gpt-5-mini)
         response = client.chat.completions.create(
             model=deployment,
             messages=formatted_messages,
-            max_completion_tokens=2048,
+            max_completion_tokens=16000,
         )
 
-        reply_content = response.choices[0].message.content or ""
+        choice = response.choices[0]
+        reply_content = choice.message.content or ""
+        if not reply_content and choice.finish_reason == "length":
+            reply_content = "⚠️ The response required deep reasoning and reached the token limit. Please try breaking down your itinerary request into smaller segments!"
+        elif not reply_content:
+            reply_content = "I couldn't generate a response for this prompt. Please try rephrasing your trip details."
+
         return ChatResponse(reply=reply_content)
 
     except Exception as e:

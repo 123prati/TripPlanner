@@ -767,18 +767,29 @@
           });
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          const text = await response.text();
+          data = { reply: text };
+        }
+
         removeThinkingIndicator();
 
         if (!response.ok) {
-          const errMsg = data.detail || data.error || 'Failed to get response from server';
+          const errMsg = data.detail || data.error || (typeof data === 'string' ? data : 'Failed to get response from server');
           showError(errMsg);
           appendMessage('assistant', `⚠️ *Unable to generate response:* ${errMsg}`);
-        } else if (data.reply) {
-          appendMessage('assistant', data.reply);
-          messageHistory.push({ role: 'assistant', content: data.reply });
         } else {
-          showError('Unexpected response format from backend.');
+          const replyText = data.reply || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || (typeof data === 'string' ? data : '');
+          if (replyText && replyText.trim().length > 0) {
+            appendMessage('assistant', replyText);
+            messageHistory.push({ role: 'assistant', content: replyText });
+          } else {
+            showError('Model returned an empty response. Please try breaking down your travel request.');
+            appendMessage('assistant', '⚠️ The travel planner returned an empty response. Please try asking a more specific question.');
+          }
         }
       } catch (err) {
         removeThinkingIndicator();
